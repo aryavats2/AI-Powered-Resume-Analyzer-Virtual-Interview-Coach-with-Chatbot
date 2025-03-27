@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume-Based Interviewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col h-screen">
+  <div class="flex flex-col max-w-4xl mx-auto w-full p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">AI-Based Job Interview</h1>
+    
+    <!-- Resume Upload Section -->
+    <div class="p-4 bg-gray-800 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold">Upload Resume:</h2>
+      <input type="file" id="resume-upload" class="mt-2 bg-gray-700 p-2 rounded-lg text-white" />
+      <button onclick="uploadResume()" class="bg-blue-500 px-4 py-2 rounded-lg mt-3">
+        Upload & Get Question
+      </button>
+    </div>
+
+    <!-- Interview Question Section -->
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold">Question:</h2>
+      <p id="question-text" class="text-lg text-gray-300">
+        Upload a resume to get a question.
+      </p>
+    </div>
+
+    <!-- Response Section -->
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold">Your Response:</h2>
+      <textarea id="response" class="w-full p-3 bg-gray-800 text-white rounded-lg mt-2" rows="4"></textarea>
+      <button onclick="evaluateResponse()" class="bg-green-500 px-4 py-2 rounded-lg mt-3">
+        Submit Response
+      </button>
+    </div>
+
+    <!-- AI Feedback Section -->
+    <div class="mt-6 p-4 bg-gray-800 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold">AI Feedback:</h2>
+      <p id="feedback" class="text-lg text-gray-300">
+        Your feedback will appear here.
+      </p>
+    </div>
+
+    <!-- Chat with SuperGpt Button -->
+    <div class="mt-6 text-center">
+      <button onclick="window.location.href='/super_gpt_chat'" class="bg-purple-500 px-4 py-2 rounded-lg">
+        Chat with SuperGpt
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let resumeText = "";
+
+    async function uploadResume() {
+      let fileInput = document.getElementById("resume-upload");
+      let formData = new FormData();
+      formData.append("resume", fileInput.files[0]);
+
+      let response = await fetch("/upload_resume", { method: "POST", body: formData });
+      let data = await response.json();
+
+      if (data.error) {
+        alert(data.error);
+      } else {
+        resumeText = data.resume_text;
+        getQuestion();
+      }
+    }
+
+    async function getQuestion() {
+      let result = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_text: resumeText })
+      });
+      let data = await result.json();
+      document.getElementById("question-text").innerText = data.question;
+    }
+
+    async function evaluateResponse() {
+      let responseText = document.getElementById("response").value;
+      let result = await fetch("/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: document.getElementById("question-text").innerText,
+          response: responseText
+        })
+      });
+      let data = await result.json();
+      document.getElementById("feedback").innerText = data.feedback;
+    }
+  </script>
+</body>
+</html>

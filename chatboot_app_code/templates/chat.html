@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col h-screen">
+
+  <!-- Chat Container -->
+  <div class="flex flex-col flex-grow max-w-4xl mx-auto w-full p-4">
+    <h1 class="text-2xl font-semibold text-center mb-4">SuperGpt - Chat with A Kiitian</h1>
+
+    <!-- Chat Box -->
+    <div id="chat-box" class="flex flex-col space-y-4 overflow-y-auto h-[70vh] bg-gray-800 p-4 rounded-lg shadow-lg">
+      <p class="text-gray-400 text-sm text-center">Upload a PDF or type your message...</p>
+    </div>
+
+    <!-- File Upload -->
+    <div class="flex items-center justify-between mt-4">
+      <input type="file" id="pdf-upload" class="hidden" accept=".pdf" />
+      <label for="pdf-upload" class="bg-blue-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-600">
+        📂 Upload PDF
+      </label>
+      <p id="upload-status" class="text-gray-400 text-sm"></p>
+    </div>
+
+    <!-- Message Input -->
+    <div class="flex items-center bg-gray-700 p-3 rounded-lg mt-4">
+      <input id="message" type="text" placeholder="Type your message..." class="flex-grow bg-transparent outline-none text-lg px-2" />
+      <button onclick="sendMessage()" class="bg-green-500 px-4 py-2 rounded-lg ml-2 hover:bg-green-600">
+        ➤
+      </button>
+    </div>
+  </div>
+
+  <script>
+    async function uploadPDF() {
+      let fileInput = document.getElementById("pdf-upload");
+      let status = document.getElementById("upload-status");
+      if (fileInput.files.length === 0) {
+        alert("Please select a PDF file!");
+        return;
+      }
+      let formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      try {
+        let response = await fetch("/upload_pdf", {
+          method: "POST",
+          body: formData
+        });
+        let result = await response.json();
+        status.innerText = result.message ? "✅ PDF Uploaded Successfully!" : "❌ Upload Failed!";
+      } catch (error) {
+        status.innerText = "❌ Upload Failed!";
+      }
+    }
+    
+    document.getElementById("pdf-upload").addEventListener("change", uploadPDF);
+
+    async function sendMessage() {
+      let messageInput = document.getElementById("message");
+      let chatBox = document.getElementById("chat-box");
+      let message = messageInput.value.trim();
+      if (message === "") return;
+      
+      // Append user message to chat box
+      let userMessage = document.createElement("div");
+      userMessage.className = "bg-blue-600 p-2 rounded-lg self-end max-w-lg";
+      userMessage.innerText = "👤 " + message;
+      chatBox.appendChild(userMessage);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      
+      messageInput.value = "";  // Clear input
+
+      try {
+        let response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message })
+        });
+        let result = await response.json();
+        
+        // Append bot reply to chat box
+        let botMessage = document.createElement("div");
+        botMessage.className = "bg-gray-700 p-2 rounded-lg self-start max-w-lg";
+        botMessage.innerText = "🤖 " + (result.reply || "No response.");
+        chatBox.appendChild(botMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+    
+    // Allow sending message with Enter key
+    document.getElementById("message").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
