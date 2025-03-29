@@ -8,9 +8,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 # -------------------- CONFIGURATION --------------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL_NAME = "llama3-8b-8192"
+
 
 INTERVIEW_DB = "interview_history.db"  # For resume/interview coach data
 CHAT_DB = "chat_history.db"            # For SuperGpt chat history
